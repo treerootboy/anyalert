@@ -1,0 +1,55 @@
+{
+  "server": {
+    "http": {
+      "enabled": true,
+      "host": "0.0.0.0",
+      "port": 8080
+    },
+    "grpc": {
+      "enabled": true,
+      "host": "0.0.0.0",
+      "port": 9090
+    }
+  },
+  "channels": {
+    "slack": {
+      "enabled": true,
+      "type": "slack",
+      "config": {
+        "webhook_url": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
+        "username": "AnyAlert",
+        "channel": "#alerts"
+      }
+    },
+    "sms": {
+      "enabled": false,
+      "type": "sms",
+      "config": {
+        "provider": "aliyun",
+        "api_key": "your_api_key",
+        "api_secret": "your_api_secret",
+        "from": "+1234567890"
+      }
+    },
+    "phone": {
+      "enabled": false,
+      "type": "phone",
+      "config": {
+        "provider": "twilio",
+        "api_key": "your_api_key",
+        "api_secret": "your_api_secret",
+        "from": "+1234567890"
+      }
+    },
+    "youdu": {
+      "enabled": false,
+      "type": "youdu",
+      "config": {
+        "api_url": "https://youdu.example.com",
+        "buin": 12345678,
+        "app_id": "your_app_id",
+        "api_key": "your_api_key"
+      }
+    }
+  }
+}

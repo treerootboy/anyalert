@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package anyalert;
+
+option go_package = "github.com/treerootboy/anyalert/proto;anyalert";
+
+// NotificationService provides notification functionality
+service NotificationService {
+  // Send sends a notification to a single channel
+  rpc Send(SendRequest) returns (SendResponse);
+  
+  // Broadcast sends a notification to multiple channels
+  rpc Broadcast(BroadcastRequest) returns (BroadcastResponse);
+  
+  // ListChannels returns available notification channels
+  rpc ListChannels(ListChannelsRequest) returns (ListChannelsResponse);
+}
+
+// Message represents a notification message
+message Message {
+  repeated string to = 1;
+  string subject = 2;
+  string content = 3;
+  string priority = 4;
+  map<string, string> metadata = 5;
+}
+
+// Response represents the result of a notification
+message Response {
+  bool success = 1;
+  string message_id = 2;
+  string error = 3;
+  map<string, string> details = 4;
+}
+
+// SendRequest represents a request to send a notification
+message SendRequest {
+  string channel = 1;
+  Message message = 2;
+}
+
+// SendResponse represents the response from sending a notification
+message SendResponse {
+  Response response = 1;
+}
+
+// BroadcastRequest represents a request to broadcast a notification
+message BroadcastRequest {
+  repeated string channels = 1;
+  Message message = 2;
+}
+
+// BroadcastResponse represents the response from broadcasting a notification
+message BroadcastResponse {
+  map<string, Response> results = 1;
+}
+
+// ListChannelsRequest represents a request to list channels
+message ListChannelsRequest {}
+
+// ListChannelsResponse represents the response with available channels
+message ListChannelsResponse {
+  repeated string channels = 1;
+}
