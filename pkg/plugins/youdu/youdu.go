@@ -6,16 +6,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/treerootboy/anyalert/pkg/notifier"
 )
 
 // Youdu implements the Notifier interface for Youdu IM
+// It uses the youdu-app-mcp HTTP API interface with token authentication
 type Youdu struct {
 	apiURL string
-	buin   int
-	appID  string
-	apiKey string
+	token  string
 }
 
 // NewYoudu creates a new Youdu notifier
@@ -31,29 +31,16 @@ func (y *Youdu) Name() string {
 // Initialize sets up the Youdu notifier with configuration
 func (y *Youdu) Initialize(config map[string]interface{}) error {
 	if apiURL, ok := config["api_url"].(string); ok {
-		y.apiURL = apiURL
+		// Remove trailing slash if present
+		y.apiURL = strings.TrimRight(apiURL, "/")
 	} else {
 		return fmt.Errorf("api_url is required")
 	}
 
-	if buin, ok := config["buin"].(int); ok {
-		y.buin = buin
-	} else if buinFloat, ok := config["buin"].(float64); ok {
-		y.buin = int(buinFloat)
+	if token, ok := config["token"].(string); ok {
+		y.token = token
 	} else {
-		return fmt.Errorf("buin is required")
-	}
-
-	if appID, ok := config["app_id"].(string); ok {
-		y.appID = appID
-	} else {
-		return fmt.Errorf("app_id is required")
-	}
-
-	if apiKey, ok := config["api_key"].(string); ok {
-		y.apiKey = apiKey
-	} else {
-		return fmt.Errorf("api_key is required")
+		return fmt.Errorf("token is required")
 	}
 
 	return nil
@@ -73,23 +60,29 @@ func (y *Youdu) Validate(msg *notifier.Message) error {
 	return nil
 }
 
-// Send sends a message via Youdu IM
+// Send sends a message via Youdu IM using the youdu-app-mcp HTTP API
 func (y *Youdu) Send(ctx context.Context, msg *notifier.Message) (*notifier.Response, error) {
-	// Build Youdu message payload
-	payload := map[string]interface{}{
-		"buin":    y.buin,
-		"appId":   y.appID,
-		"toUser":  msg.To,
-		"msgType": "text",
-		"text": map[string]string{
-			"content": msg.Content,
-		},
+	// The youdu-app-mcp API uses send_text_message endpoint
+	// Format: POST /api/v1/send_text_message
+	// Body: {"to_user": "user123", "content": "message"}
+
+	// Build request payload
+	// For multiple recipients, we'll send to each one
+	// Or if the first recipient contains the user ID format, use it directly
+	var toUser string
+	if len(msg.To) > 0 {
+		toUser = msg.To[0] // Use first recipient as the user ID
 	}
 
+	// Combine subject and content if subject exists
+	content := msg.Content
 	if msg.Subject != "" {
-		payload["text"] = map[string]string{
-			"content": fmt.Sprintf("%s\n%s", msg.Subject, msg.Content),
-		}
+		content = fmt.Sprintf("%s\n%s", msg.Subject, msg.Content)
+	}
+
+	payload := map[string]interface{}{
+		"to_user": toUser,
+		"content": content,
 	}
 
 	jsonData, err := json.Marshal(payload)
@@ -100,14 +93,20 @@ func (y *Youdu) Send(ctx context.Context, msg *notifier.Message) (*notifier.Resp
 		}, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", y.apiURL+"/cgi/msg/send", bytes.NewBuffer(jsonData))
+	// Create HTTP request to the youdu-app-mcp API
+	apiEndpoint := fmt.Sprintf("%s/api/v1/send_text_message", y.apiURL)
+	req, err := http.NewRequestWithContext(ctx, "POST", apiEndpoint, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return &notifier.Response{
 			Success: false,
 			Error:   fmt.Sprintf("failed to create request: %v", err),
 		}, err
 	}
+
+	// Set headers
 	req.Header.Set("Content-Type", "application/json")
+	// Add token authentication - support both Bearer format and direct token
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", y.token))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -127,11 +126,18 @@ func (y *Youdu) Send(ctx context.Context, msg *notifier.Message) (*notifier.Resp
 		}, err
 	}
 
-	if errCode, ok := result["errcode"].(float64); ok && errCode != 0 {
-		return &notifier.Response{
-			Success: false,
-			Error:   fmt.Sprintf("youdu returned error code: %v", errCode),
-		}, fmt.Errorf("youdu returned error code: %v", errCode)
+	// Check for error in response
+	if errVal, ok := result["error"]; ok {
+		if errBool, ok := errVal.(bool); ok && errBool {
+			errMsg := "unknown error"
+			if msg, ok := result["message"].(string); ok {
+				errMsg = msg
+			}
+			return &notifier.Response{
+				Success: false,
+				Error:   fmt.Sprintf("youdu-app-mcp returned error: %s", errMsg),
+			}, fmt.Errorf("youdu-app-mcp returned error: %s", errMsg)
+		}
 	}
 
 	return &notifier.Response{
