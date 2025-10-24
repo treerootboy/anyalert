@@ -1,2 +1,210 @@
-# anyalert
-一个 golang 通知框架，通过插件整合slack、短信、电话、有度im等通知渠道
+# AnyAlert
+
+一个 golang 通知框架，通过插件整合 Slack、短信、电话、有度IM等通知渠道，并提供 HTTP 和 gRPC 服务接口。
+
+## 特性
+
+- 🔌 **插件化架构**：支持多种通知渠道，易于扩展
+- 🌐 **多服务支持**：同时提供 HTTP REST API 和 gRPC 服务
+- 📡 **统一接口**：标准化的通知消息格式
+- 🔄 **并发广播**：支持同时向多个渠道发送通知
+- ⚙️ **配置驱动**：通过 JSON 配置文件管理所有渠道
+
+## 支持的通知渠道
+
+- ✅ Slack
+- ✅ 短信 (SMS)
+- ✅ 电话 (Phone Call)
+- ✅ 有度 IM (Youdu)
+
+## 安装
+
+```bash
+git clone https://github.com/treerootboy/anyalert.git
+cd anyalert
+make install
+make build
+```
+
+## 配置
+
+创建配置文件 `config.json`（可以从 `config.example.json` 复制）：
+
+```json
+{
+  "server": {
+    "http": {
+      "enabled": true,
+      "host": "0.0.0.0",
+      "port": 8080
+    },
+    "grpc": {
+      "enabled": true,
+      "host": "0.0.0.0",
+      "port": 9090
+    }
+  },
+  "channels": {
+    "slack": {
+      "enabled": true,
+      "type": "slack",
+      "config": {
+        "webhook_url": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
+        "username": "AnyAlert",
+        "channel": "#alerts"
+      }
+    }
+  }
+}
+```
+
+## 使用方法
+
+### 启动服务器
+
+```bash
+# 使用默认配置文件 config.json
+./bin/anyalert-server
+
+# 或指定配置文件
+./bin/anyalert-server -config /path/to/config.json
+```
+
+### HTTP API 示例
+
+#### 发送单个通知
+
+```bash
+curl -X POST http://localhost:8080/api/v1/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channel": "slack",
+    "message": {
+      "to": ["user@example.com"],
+      "subject": "测试通知",
+      "content": "这是一条测试消息",
+      "priority": "high"
+    }
+  }'
+```
+
+#### 广播通知到多个渠道
+
+```bash
+curl -X POST http://localhost:8080/api/v1/broadcast \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channels": ["slack", "sms"],
+    "message": {
+      "to": ["user@example.com", "+86-13800138000"],
+      "subject": "紧急通知",
+      "content": "系统告警：服务器CPU使用率超过90%",
+      "priority": "urgent"
+    }
+  }'
+```
+
+#### 列出所有可用渠道
+
+```bash
+curl http://localhost:8080/api/v1/channels
+```
+
+#### 健康检查
+
+```bash
+curl http://localhost:8080/health
+```
+
+### gRPC API 示例
+
+使用 gRPC 客户端连接到 `localhost:9090`，参考 proto 定义文件 `proto/notification.proto`。
+
+## 开发
+
+### 项目结构
+
+```
+anyalert/
+├── api/                    # API 层
+│   ├── grpc/              # gRPC 服务实现
+│   └── http/              # HTTP 服务实现
+├── cmd/                   # 应用程序入口
+│   └── server/            # 服务器主程序
+├── internal/              # 内部包
+│   └── config/            # 配置管理
+├── pkg/                   # 公共包
+│   ├── notifier/          # 核心通知接口
+│   └── plugins/           # 通知插件
+│       ├── slack/         # Slack 插件
+│       ├── sms/           # 短信插件
+│       ├── phone/         # 电话插件
+│       └── youdu/         # 有度 IM 插件
+├── proto/                 # Protocol Buffers 定义
+└── scripts/               # 工具脚本
+```
+
+### 添加新的通知渠道
+
+1. 在 `pkg/plugins/` 下创建新目录
+2. 实现 `notifier.Notifier` 接口
+3. 在 `cmd/server/main.go` 的 `registerChannels` 函数中注册新插件
+
+### 构建和测试
+
+```bash
+# 安装依赖
+make install
+
+# 格式化代码
+make fmt
+
+# 运行代码检查
+make lint
+
+# 运行测试
+make test
+
+# 构建
+make build
+
+# 生成 proto 文件
+make proto
+```
+
+## API 文档
+
+### 消息格式
+
+```json
+{
+  "to": ["recipient1", "recipient2"],
+  "subject": "消息主题",
+  "content": "消息内容",
+  "priority": "normal",
+  "metadata": {
+    "key": "value"
+  }
+}
+```
+
+### 响应格式
+
+```json
+{
+  "success": true,
+  "message_id": "msg-12345",
+  "error": "",
+  "details": {
+    "info": "additional info"
+  }
+}
+```
+
+## 许可证
+
+MIT License
+
+## 贡献
+
+欢迎提交 Issue 和 Pull Request！
