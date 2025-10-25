@@ -170,10 +170,8 @@ curl -X POST http://localhost:8080/api/v1/send \
       "enabled": true,
       "type": "youdu",
       "config": {
-        "api_url": "https://youdu.example.com",
-        "buin": 12345678,
-        "app_id": "your_app_id",
-        "api_key": "your_api_key"
+        "api_url": "http://localhost:8080",
+        "token": "your-api-token-here"
       }
     }
   }
@@ -197,6 +195,75 @@ curl -X POST http://localhost:8080/api/v1/broadcast \
     }
   }'
 ```
+
+## 配置有度（Youdu）通知渠道
+
+AnyAlert 使用 [youdu-app-mcp](https://github.com/treerootboy/youdu-app-mcp) 提供的 HTTP API 接口与有度 IM 集成。
+
+### 1. 启动 youdu-app-mcp 服务
+
+首先，你需要部署并运行 youdu-app-mcp HTTP API 服务器。参考 youdu-app-mcp 的文档：
+
+```bash
+# 克隆 youdu-app-mcp 仓库
+git clone https://github.com/treerootboy/youdu-app-mcp.git
+cd youdu-app-mcp
+
+# 配置有度连接信息
+cp config.yaml.example config.yaml
+# 编辑 config.yaml，填写你的有度服务器信息
+
+# 启动 HTTP API 服务器
+./bin/youdu-cli serve-api --port 8080
+```
+
+### 2. 生成访问 Token
+
+使用 youdu-app-mcp 的 CLI 生成 API 访问令牌：
+
+```bash
+cd youdu-app-mcp
+./bin/youdu-cli token generate --description "AnyAlert Integration"
+```
+
+记录生成的 token 值。
+
+### 3. 配置 AnyAlert
+
+在 AnyAlert 的 `config.json` 中添加有度配置：
+
+```json
+{
+  "channels": {
+    "youdu": {
+      "enabled": true,
+      "type": "youdu",
+      "config": {
+        "api_url": "http://localhost:8080",
+        "token": "your-generated-token-here"
+      }
+    }
+  }
+}
+```
+
+### 4. 发送有度消息
+
+```bash
+curl -X POST http://localhost:8080/api/v1/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channel": "youdu",
+    "message": {
+      "to": ["zhangsan"],
+      "subject": "系统通知",
+      "content": "这是通过 AnyAlert 发送的有度消息",
+      "priority": "normal"
+    }
+  }'
+```
+
+**注意**：`to` 字段应该填写有度用户的用户 ID（如 "zhangsan"）。
 
 ## 运行示例客户端
 

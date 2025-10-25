@@ -244,18 +244,22 @@ rpc ListChannels(ListChannelsRequest) returns (ListChannelsResponse);
 
 ### Youdu IM
 
+使用 [youdu-app-mcp](https://github.com/treerootboy/youdu-app-mcp) 提供的 HTTP API 接口，通过 token 进行身份验证。
+
 ```json
 {
   "enabled": true,
   "type": "youdu",
   "config": {
-    "api_url": "https://youdu.example.com",
-    "buin": 12345678,
-    "app_id": "your_app_id",
-    "api_key": "your_api_key"
+    "api_url": "http://localhost:8080",
+    "token": "your-api-token-here"
   }
 }
 ```
+
+配置说明：
+- `api_url`: youdu-app-mcp HTTP API 服务器地址（默认端口 8080）
+- `token`: 访问 API 的身份验证令牌（通过 youdu-app-mcp 的 `token generate` 命令生成）
 
 ## 错误码
 
