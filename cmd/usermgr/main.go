@@ -7,11 +7,12 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"github.com/treerootboy/anyalert/pkg/database"
 	"github.com/treerootboy/anyalert/pkg/userstore"
 )
 
 const (
-	defaultDBPath = "users.db"
+	defaultDBPath = "anyalert.db"
 )
 
 func main() {
@@ -75,9 +76,20 @@ func addUser(args []string) {
 		os.Exit(1)
 	}
 
-	store, err := userstore.NewSQLiteStore(*dbPath)
+	// 使用共享数据库配置
+	dbConfig := database.Config{
+		Path: *dbPath,
+	}
+	db, err := database.New(dbConfig)
 	if err != nil {
 		fmt.Printf("Failed to open database: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	store, err := userstore.NewSQLiteStoreWithDB(db.GetConnection())
+	if err != nil {
+		fmt.Printf("Failed to create user store: %v\n", err)
 		os.Exit(1)
 	}
 	defer store.Close()
@@ -106,9 +118,20 @@ func listUsers(args []string) {
 
 	fs.Parse(args)
 
-	store, err := userstore.NewSQLiteStore(*dbPath)
+	// 使用共享数据库配置
+	dbConfig := database.Config{
+		Path: *dbPath,
+	}
+	db, err := database.New(dbConfig)
 	if err != nil {
 		fmt.Printf("Failed to open database: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	store, err := userstore.NewSQLiteStoreWithDB(db.GetConnection())
+	if err != nil {
+		fmt.Printf("Failed to create user store: %v\n", err)
 		os.Exit(1)
 	}
 	defer store.Close()
@@ -158,9 +181,20 @@ func getUser(args []string) {
 		os.Exit(1)
 	}
 
-	store, err := userstore.NewSQLiteStore(*dbPath)
+	// 使用共享数据库配置
+	dbConfig := database.Config{
+		Path: *dbPath,
+	}
+	db, err := database.New(dbConfig)
 	if err != nil {
 		fmt.Printf("Failed to open database: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	store, err := userstore.NewSQLiteStoreWithDB(db.GetConnection())
+	if err != nil {
+		fmt.Printf("Failed to create user store: %v\n", err)
 		os.Exit(1)
 	}
 	defer store.Close()
@@ -201,9 +235,20 @@ func updateUser(args []string) {
 		os.Exit(1)
 	}
 
-	store, err := userstore.NewSQLiteStore(*dbPath)
+	// 使用共享数据库配置
+	dbConfig := database.Config{
+		Path: *dbPath,
+	}
+	db, err := database.New(dbConfig)
 	if err != nil {
 		fmt.Printf("Failed to open database: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	store, err := userstore.NewSQLiteStoreWithDB(db.GetConnection())
+	if err != nil {
+		fmt.Printf("Failed to create user store: %v\n", err)
 		os.Exit(1)
 	}
 	defer store.Close()
@@ -256,9 +301,20 @@ func deleteUser(args []string) {
 		os.Exit(1)
 	}
 
-	store, err := userstore.NewSQLiteStore(*dbPath)
+	// 使用共享数据库配置
+	dbConfig := database.Config{
+		Path: *dbPath,
+	}
+	db, err := database.New(dbConfig)
 	if err != nil {
 		fmt.Printf("Failed to open database: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	store, err := userstore.NewSQLiteStoreWithDB(db.GetConnection())
+	if err != nil {
+		fmt.Printf("Failed to create user store: %v\n", err)
 		os.Exit(1)
 	}
 	defer store.Close()

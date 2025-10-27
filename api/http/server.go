@@ -5,21 +5,28 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
+	"github.com/treerootboy/anyalert/internal/config"
 	"github.com/treerootboy/anyalert/pkg/notifier"
 )
 
 // Server represents the HTTP server
 type Server struct {
-	manager *notifier.Manager
-	addr    string
+	manager      *notifier.Manager
+	addr         string
+	config       *config.Config
+	tokenEnabled bool
 }
 
 // NewServer creates a new HTTP server
-func NewServer(manager *notifier.Manager, host string, port int) *Server {
+func NewServer(manager *notifier.Manager, cfg *config.Config, host string, port int) *Server {
+	tokenEnabled := cfg.Token.Enabled && cfg.TokenManager != nil && cfg.TokenManager.Count() > 0
 	return &Server{
-		manager: manager,
-		addr:    fmt.Sprintf("%s:%d", host, port),
+		manager:      manager,
+		addr:         fmt.Sprintf("%s:%d", host, port),
+		config:       cfg,
+		tokenEnabled: tokenEnabled,
 	}
 }
 
@@ -34,7 +41,19 @@ func (s *Server) Start() error {
 	mux.HandleFunc("/health", s.handleHealth)
 
 	log.Printf("Starting HTTP server on %s", s.addr)
-	return http.ListenAndServe(s.addr, s.corsMiddleware(mux))
+	if s.tokenEnabled {
+		log.Printf("Token authentication: enabled (%d tokens)", s.config.TokenManager.Count())
+	} else {
+		log.Printf("Token authentication: disabled")
+	}
+
+	// 应用中间件
+	handler := s.corsMiddleware(mux)
+	if s.tokenEnabled {
+		handler = s.tokenAuthMiddleware(handler)
+	}
+
+	return http.ListenAndServe(s.addr, handler)
 }
 
 // corsMiddleware adds CORS headers
@@ -139,5 +158,45 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "ok",
+	})
+}
+
+// tokenAuthMiddleware 验证 token
+func (s *Server) tokenAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 跳过健康检查和 channels 列表
+		if r.URL.Path == "/health" || r.URL.Path == "/api/v1/channels" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// 从 Authorization header 获取 token
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"error":   "Missing Authorization header",
+			})
+			return
+		}
+
+		// 支持两种格式: "Bearer <token>" 或 直接 "<token>"
+		token := authHeader
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			token = strings.TrimPrefix(authHeader, "Bearer ")
+		}
+
+		// 验证 token
+		if !s.config.TokenManager.Validate(token) {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"error":   "Invalid token",
+			})
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	})
 }
