@@ -11,6 +11,12 @@
       "port": 9090
     }
   },
+  "database": {
+    "path": "./anyalert.db"
+  },
+  "token": {
+    "enabled": false
+  },
   "channels": {
     "slack": {
       "enabled": true,

@@ -27,6 +27,7 @@ func main() {
 		log.Printf("Failed to load config file, using defaults: %v", err)
 		cfg = config.DefaultConfig()
 	}
+	defer cfg.Close() // 确保关闭数据库连接
 
 	// Create notification manager
 	manager := notifier.NewManager()
@@ -43,7 +44,7 @@ func main() {
 
 	if cfg.Server.HTTP.Enabled {
 		go func() {
-			httpServer := httpapi.NewServer(manager, cfg.Server.HTTP.Host, cfg.Server.HTTP.Port)
+			httpServer := httpapi.NewServer(manager, cfg, cfg.Server.HTTP.Host, cfg.Server.HTTP.Port)
 			errChan <- httpServer.Start()
 		}()
 	}

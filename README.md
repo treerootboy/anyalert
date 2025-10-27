@@ -44,6 +44,12 @@ make build
       "port": 9090
     }
   },
+  "database": {
+    "path": "./anyalert.db"
+  },
+  "token": {
+    "enabled": false
+  },
   "channels": {
     "slack": {
       "enabled": true,
@@ -201,11 +207,96 @@ make build-usermgr
 
 #### 自定义数据库路径
 
-默认情况下，用户数据存储在当前目录的 `users.db` 文件中。可以通过 `-db` 参数指定其他路径：
+默认情况下，用户数据和 token 数据都存储在同一个数据库文件 `anyalert.db` 中。可以通过 `-db` 参数指定其他路径：
 
 ```bash
-./bin/usermgr add -db /path/to/users.db -name user1 -slack user1@example.com
+./bin/usermgr add -db /path/to/anyalert.db -name user1 -slack user1@example.com
 ```
+
+### Token 认证管理
+
+AnyAlert 提供了 token 认证功能，可以保护 HTTP API 访问。
+
+#### 配置 Token 认证
+
+在 `config.json` 中启用 token 认证：
+
+```json
+{
+  "database": {
+    "path": "./anyalert.db"
+  },
+  "token": {
+    "enabled": true
+  }
+}
+```
+
+#### Token 管理 CLI 工具
+
+首先构建 token 管理工具：
+
+```bash
+make build-tokenmgr
+```
+
+#### 生成 Token
+
+```bash
+# 生成永不过期的 token
+./bin/tokenmgr generate --description "API token for service A"
+
+# 生成 24 小时后过期的 token
+./bin/tokenmgr generate --description "Temporary token" --expires-in 24h
+
+# JSON 格式输出
+./bin/tokenmgr generate --description "Test token" --json
+```
+
+#### 列出所有 Token
+
+```bash
+# 表格格式
+./bin/tokenmgr list
+
+# JSON 格式
+./bin/tokenmgr list --json
+```
+
+#### 撤销 Token
+
+```bash
+./bin/tokenmgr revoke --id abc123
+```
+
+#### 使用 Token 访问 API
+
+在 HTTP 请求中添加 `Authorization` header：
+
+```bash
+# 使用 Bearer 前缀
+curl -X POST http://localhost:8080/api/v1/send \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN_VALUE" \
+  -d '{
+    "channel": "slack",
+    "message": {
+      "to": ["user@example.com"],
+      "subject": "测试通知",
+      "content": "这是一条测试消息"
+    }
+  }'
+
+# 或直接使用 token 值
+curl -X POST http://localhost:8080/api/v1/send \
+  -H "Content-Type: application/json" \
+  -H "Authorization: YOUR_TOKEN_VALUE" \
+  -d '...'
+```
+
+**注意：**
+- 健康检查端点 `/health` 和频道列表端点 `/api/v1/channels` 不需要 token 认证
+- 其他所有 API 端点在启用 token 认证后都需要提供有效的 token
 
 ### 添加新的通知渠道
 

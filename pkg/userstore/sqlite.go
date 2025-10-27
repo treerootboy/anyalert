@@ -10,7 +10,8 @@ import (
 
 // SQLiteStore implements the Store interface using SQLite
 type SQLiteStore struct {
-	db *sql.DB
+	db       *sql.DB
+	ownsConn bool // 标记是否拥有连接（用于决定是否在 Close 时关闭连接）
 }
 
 // NewSQLiteStore creates a new SQLite-based user store
@@ -20,13 +21,57 @@ func NewSQLiteStore(dbPath string) (*SQLiteStore, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	store := &SQLiteStore{db: db}
-	if err := store.initialize(); err != nil {
+	store := &SQLiteStore{
+		db:       db,
+		ownsConn: true, // 我们拥有这个连接
+	}
+	if err := store.initializeIfNeeded(); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
 
 	return store, nil
+}
+
+// NewSQLiteStoreWithDB creates a new SQLite-based user store with an existing database connection
+func NewSQLiteStoreWithDB(db *sql.DB) (*SQLiteStore, error) {
+	if db == nil {
+		return nil, fmt.Errorf("database connection cannot be nil")
+	}
+
+	store := &SQLiteStore{
+		db:       db,
+		ownsConn: false, // 我们不拥有这个连接
+	}
+	if err := store.initializeIfNeeded(); err != nil {
+		return nil, fmt.Errorf("failed to initialize database: %w", err)
+	}
+
+	return store, nil
+}
+
+// initializeIfNeeded creates the users table if it doesn't exist
+// 使用 IF NOT EXISTS 确保幂等性，可以安全地多次调用
+func (s *SQLiteStore) initializeIfNeeded() error {
+	// 检查表是否存在
+	var tableName string
+	err := s.db.QueryRow(`
+		SELECT name FROM sqlite_master 
+		WHERE type='table' AND name='users'
+	`).Scan(&tableName)
+	
+	// 如果表已存在，直接返回
+	if err == nil {
+		return nil
+	}
+	
+	// 如果是其他错误（不是 sql.ErrNoRows），返回错误
+	if err != sql.ErrNoRows {
+		return err
+	}
+
+	// 表不存在，创建表
+	return s.initialize()
 }
 
 // initialize creates the users table if it doesn't exist
@@ -237,5 +282,9 @@ func (s *SQLiteStore) Delete(id int64) error {
 
 // Close closes the database connection
 func (s *SQLiteStore) Close() error {
-	return s.db.Close()
+	// 只有当我们拥有连接时才关闭它
+	if s.ownsConn && s.db != nil {
+		return s.db.Close()
+	}
+	return nil
 }

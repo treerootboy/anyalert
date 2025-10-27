@@ -1,4 +1,4 @@
-.PHONY: build run test clean proto install build-usermgr
+.PHONY: build run test clean proto install build-usermgr build-tokenmgr
 
 # Build the server
 build:
@@ -8,8 +8,12 @@ build:
 build-usermgr:
 	go build -o bin/usermgr cmd/usermgr/main.go
 
+# Build the token manager CLI
+build-tokenmgr:
+	go build -o bin/tokenmgr cmd/tokenmgr/main.go
+
 # Build all binaries
-build-all-bins: build build-usermgr
+build-all-bins: build build-usermgr build-tokenmgr
 
 # Run the server
 run: build
