@@ -32,6 +32,9 @@ Thumbs.db
 # Config files (may contain secrets)
 config.json
 
+# User database
+*.db
+
 # Temporary files
 /tmp/
 *.log
