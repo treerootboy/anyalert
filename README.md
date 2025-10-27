@@ -9,6 +9,7 @@
 - 📡 **统一接口**：标准化的通知消息格式
 - 🔄 **并发广播**：支持同时向多个渠道发送通知
 - ⚙️ **配置驱动**：通过 JSON 配置文件管理所有渠道
+- 🛠️ **统一 CLI**：单一命令行工具管理服务、用户和 Token
 
 ## 支持的通知渠道
 
@@ -24,6 +25,21 @@ git clone https://github.com/treerootboy/anyalert.git
 cd anyalert
 make install
 make build
+```
+
+构建完成后，会在 `bin/` 目录下生成 `anyalert` 可执行文件，它提供了以下子命令：
+
+- `anyalert server` - 启动通知服务器
+- `anyalert user` - 管理用户元数据
+- `anyalert token` - 管理 API Token
+
+查看帮助信息：
+
+```bash
+./bin/anyalert --help
+./bin/anyalert server --help
+./bin/anyalert user --help
+./bin/anyalert token --help
 ```
 
 ## 配置
@@ -113,10 +129,12 @@ Slack 通道支持两种认证方式：
 
 ```bash
 # 使用默认配置文件 config.json
-./bin/anyalert-server
+./bin/anyalert server
 
 # 或指定配置文件
-./bin/anyalert-server -config /path/to/config.json
+./bin/anyalert server -c /path/to/config.json
+# 或
+./bin/anyalert server --config /path/to/config.json
 ```
 
 ### HTTP API 示例
@@ -223,11 +241,17 @@ anyalert/
 │   ├── grpc/              # gRPC 服务实现
 │   └── http/              # HTTP 服务实现
 ├── cmd/                   # 应用程序入口
-│   └── server/            # 服务器主程序
+│   ├── anyalert/          # 统一 CLI 工具（主入口）
+│   ├── server/            # 服务器主程序（保留向后兼容）
+│   ├── usermgr/           # 用户管理工具（保留向后兼容）
+│   └── tokenmgr/          # Token 管理工具（保留向后兼容）
 ├── internal/              # 内部包
 │   └── config/            # 配置管理
 ├── pkg/                   # 公共包
 │   ├── notifier/          # 核心通知接口
+│   ├── database/          # 数据库管理
+│   ├── userstore/         # 用户存储
+│   ├── token/             # Token 管理
 │   └── plugins/           # 通知插件
 │       ├── slack/         # Slack 插件
 │       ├── sms/           # 短信插件
@@ -241,63 +265,55 @@ anyalert/
 
 AnyAlert 提供了用户元数据管理功能，可以配置每个用户在不同通知渠道的通知对象。
 
-#### 用户管理 CLI 工具
-
-首先构建用户管理工具：
-
-```bash
-make build-usermgr
-```
-
 #### 添加用户
 
 ```bash
 # 添加用户，配置不同渠道的账号信息
-./bin/usermgr add -name user1 \
-  -slack user1@example.com \
-  -youdu 10232 \
-  -phone +8613800138000 \
-  -sms +8613800138000
+./bin/anyalert user add --name user1 \
+  --slack user1@example.com \
+  --youdu 10232 \
+  --phone +8613800138000 \
+  --sms +8613800138000
 ```
 
 #### 列出所有用户
 
 ```bash
 # 表格格式
-./bin/usermgr list
+./bin/anyalert user list
 
 # JSON 格式
-./bin/usermgr list -json
+./bin/anyalert user list --json
 ```
 
 #### 查询用户
 
 ```bash
-./bin/usermgr get -name user1
+./bin/anyalert user get --name user1
 ```
 
 #### 更新用户信息
 
 ```bash
 # 更新用户的 Slack 账号
-./bin/usermgr update -name user1 -slack updated@example.com
+./bin/anyalert user update --name user1 --slack updated@example.com
 
 # 可以同时更新多个字段
-./bin/usermgr update -name user1 -slack new@example.com -phone +8613800138001
+./bin/anyalert user update --name user1 --slack new@example.com --phone +8613800138001
 ```
 
 #### 删除用户
 
 ```bash
-./bin/usermgr delete -name user1
+./bin/anyalert user delete --name user1
 ```
 
 #### 自定义数据库路径
 
-默认情况下，用户数据和 token 数据都存储在同一个数据库文件 `anyalert.db` 中。可以通过 `-db` 参数指定其他路径：
+默认情况下，用户数据和 token 数据都存储在同一个数据库文件 `anyalert.db` 中。可以通过 `--db` 参数指定其他路径：
 
 ```bash
-./bin/usermgr add -db /path/to/anyalert.db -name user1 -slack user1@example.com
+./bin/anyalert user add --db /path/to/anyalert.db --name user1 --slack user1@example.com
 ```
 
 ### Token 认证管理
@@ -319,41 +335,35 @@ AnyAlert 提供了 token 认证功能，可以保护 HTTP API 访问。
 }
 ```
 
-#### Token 管理 CLI 工具
-
-首先构建 token 管理工具：
-
-```bash
-make build-tokenmgr
-```
+#### Token 管理
 
 #### 生成 Token
 
 ```bash
 # 生成永不过期的 token
-./bin/tokenmgr generate --description "API token for service A"
+./bin/anyalert token generate --description "API token for service A"
 
 # 生成 24 小时后过期的 token
-./bin/tokenmgr generate --description "Temporary token" --expires-in 24h
+./bin/anyalert token generate --description "Temporary token" --expires-in 24h
 
 # JSON 格式输出
-./bin/tokenmgr generate --description "Test token" --json
+./bin/anyalert token generate --description "Test token" --json
 ```
 
 #### 列出所有 Token
 
 ```bash
 # 表格格式
-./bin/tokenmgr list
+./bin/anyalert token list
 
 # JSON 格式
-./bin/tokenmgr list --json
+./bin/anyalert token list --json
 ```
 
 #### 撤销 Token
 
 ```bash
-./bin/tokenmgr revoke --id abc123
+./bin/anyalert token revoke --id abc123
 ```
 
 #### 使用 Token 访问 API
@@ -441,6 +451,21 @@ make proto
   }
 }
 ```
+
+## 向后兼容性
+
+为了保持向后兼容性，原有的独立命令行工具仍然保留在代码库中，可以通过以下方式构建：
+
+```bash
+make build-legacy
+```
+
+这将生成以下二进制文件：
+- `bin/anyalert-server` - 服务器程序（等同于 `anyalert server`）
+- `bin/usermgr` - 用户管理工具（等同于 `anyalert user`）
+- `bin/tokenmgr` - Token 管理工具（等同于 `anyalert token`）
+
+**建议使用新的统一 CLI 工具 `anyalert`**，它提供了更好的用户体验和一致的命令行接口。
 
 ## 许可证
 
