@@ -9,6 +9,8 @@ require (
 )
 
 require (
+	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/slack-go/slack v0.15.0 // indirect
 	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
