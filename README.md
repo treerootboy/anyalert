@@ -75,6 +75,14 @@ Slack 通道支持两种认证方式：
 - `icon_emoji`: Bot 头像 emoji（可选，格式：:emoji_name:）
 - `icon_url`: Bot 头像 URL（可选，与 icon_emoji 二选一）
 
+**如何获取 Bot Token：**
+1. 访问 [Slack API](https://api.slack.com/apps) 创建或选择应用
+2. 在 "OAuth & Permissions" 页面添加 Bot Token Scopes：
+   - `chat:write` - 发送消息
+   - `chat:write.customize` - 自定义用户名和头像
+3. 安装应用到工作区
+4. 复制 "Bot User OAuth Token"（格式：xoxb-...）
+
 #### 方式 2：Webhook URL（向后兼容）
 
 ```json
