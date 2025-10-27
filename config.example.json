@@ -22,6 +22,17 @@
       "enabled": true,
       "type": "slack",
       "config": {
+        "bot_token": "xoxb-your-bot-user-oauth-token",
+        "username": "AnyAlert",
+        "channel": "#alerts",
+        "icon_emoji": ":robot_face:",
+        "icon_url": ""
+      }
+    },
+    "slack_webhook": {
+      "enabled": false,
+      "type": "slack",
+      "config": {
         "webhook_url": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
         "username": "AnyAlert",
         "channel": "#alerts"

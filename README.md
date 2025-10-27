@@ -30,6 +30,14 @@ make build
 
 创建配置文件 `config.json`（可以从 `config.example.json` 复制）：
 
+### Slack 配置
+
+Slack 通道支持两种认证方式：
+
+#### 方式 1：Bot User OAuth Token（推荐）
+
+使用 Bot User OAuth Token 可以更灵活地控制发送者的名称、头像等，并支持发送到用户或频道。
+
 ```json
 {
   "server": {
@@ -50,6 +58,41 @@ make build
   "token": {
     "enabled": false
   },
+  "channels": {
+    "slack": {
+      "enabled": true,
+      "type": "slack",
+      "config": {
+        "bot_token": "xoxb-your-bot-user-oauth-token",
+        "username": "AnyAlert",
+        "channel": "#alerts",
+        "icon_emoji": ":robot_face:",
+        "icon_url": ""
+      }
+    }
+  }
+}
+```
+
+**配置说明：**
+- `bot_token`: Slack Bot User OAuth Token（必填，格式：xoxb-...）
+- `username`: Bot 显示的用户名（可选，默认：AnyAlert）
+- `channel`: 默认发送频道（可选，格式：#channel-name 或 @username）
+- `icon_emoji`: Bot 头像 emoji（可选，格式：:emoji_name:）
+- `icon_url`: Bot 头像 URL（可选，与 icon_emoji 二选一）
+
+**如何获取 Bot Token：**
+1. 访问 [Slack API](https://api.slack.com/apps) 创建或选择应用
+2. 在 "OAuth & Permissions" 页面添加 Bot Token Scopes：
+   - `chat:write` - 发送消息
+   - `chat:write.customize` - 自定义用户名和头像
+3. 安装应用到工作区
+4. 复制 "Bot User OAuth Token"（格式：xoxb-...）
+
+#### 方式 2：Webhook URL（向后兼容）
+
+```json
+{
   "channels": {
     "slack": {
       "enabled": true,
@@ -90,6 +133,50 @@ curl -X POST http://localhost:8080/api/v1/send \
       "subject": "测试通知",
       "content": "这是一条测试消息",
       "priority": "high"
+    }
+  }'
+```
+
+#### 发送到指定 Slack 频道或用户
+
+使用 Bot User OAuth Token 模式时，可以灵活指定发送目标：
+
+```bash
+# 发送到指定频道
+curl -X POST http://localhost:8080/api/v1/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channel": "slack",
+    "message": {
+      "to": ["#engineering"],
+      "subject": "部署通知",
+      "content": "新版本已部署到生产环境"
+    }
+  }'
+
+# 发送到指定用户
+curl -X POST http://localhost:8080/api/v1/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channel": "slack",
+    "message": {
+      "to": ["@john.doe"],
+      "subject": "个人通知",
+      "content": "您的任务已完成"
+    }
+  }'
+
+# 通过 metadata 指定频道
+curl -X POST http://localhost:8080/api/v1/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channel": "slack",
+    "message": {
+      "subject": "告警通知",
+      "content": "系统负载过高",
+      "metadata": {
+        "channel": "#alerts"
+      }
     }
   }'
 ```
