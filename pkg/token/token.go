@@ -214,16 +214,37 @@ func (m *Manager) List() []*Token {
 
 		// 解析创建时间
 		if createdAtStr.Valid {
-			if parsedTime, err := time.Parse("2006-01-02 15:04:05", createdAtStr.String); err == nil {
-				token.CreatedAt = parsedTime.UTC()
+			// 尝试多种时间格式
+			var parsedTime time.Time
+			var err error
+			
+			// 首先尝试 RFC3339 格式（SQLite 驱动可能会返回这种格式）
+			parsedTime, err = time.Parse(time.RFC3339, createdAtStr.String)
+			if err != nil {
+				// 如果失败，尝试简单的日期时间格式
+				parsedTime, err = time.Parse("2006-01-02 15:04:05", createdAtStr.String)
+			}
+			
+			if err == nil {
+				token.CreatedAt = parsedTime
 			}
 		}
 
 		// 解析过期时间
 		if expiresAtStr.Valid {
-			if parsedTime, err := time.Parse("2006-01-02 15:04:05", expiresAtStr.String); err == nil {
-				utcTime := parsedTime.UTC()
-				token.ExpiresAt = &utcTime
+			// 尝试多种时间格式
+			var parsedTime time.Time
+			var err error
+			
+			// 首先尝试 RFC3339 格式（SQLite 驱动可能会返回这种格式）
+			parsedTime, err = time.Parse(time.RFC3339, expiresAtStr.String)
+			if err != nil {
+				// 如果失败，尝试简单的日期时间格式
+				parsedTime, err = time.Parse("2006-01-02 15:04:05", expiresAtStr.String)
+			}
+			
+			if err == nil {
+				token.ExpiresAt = &parsedTime
 			}
 		}
 
@@ -260,16 +281,37 @@ func (m *Manager) Get(tokenValue string) (*Token, bool) {
 
 	// 解析创建时间
 	if createdAtStr.Valid {
-		if parsedTime, err := time.Parse("2006-01-02 15:04:05", createdAtStr.String); err == nil {
-			token.CreatedAt = parsedTime.UTC()
+		// 尝试多种时间格式
+		var parsedTime time.Time
+		var err error
+		
+		// 首先尝试 RFC3339 格式（SQLite 驱动可能会返回这种格式）
+		parsedTime, err = time.Parse(time.RFC3339, createdAtStr.String)
+		if err != nil {
+			// 如果失败，尝试简单的日期时间格式
+			parsedTime, err = time.Parse("2006-01-02 15:04:05", createdAtStr.String)
+		}
+		
+		if err == nil {
+			token.CreatedAt = parsedTime
 		}
 	}
 
 	// 解析过期时间
 	if expiresAtStr.Valid {
-		if parsedTime, err := time.Parse("2006-01-02 15:04:05", expiresAtStr.String); err == nil {
-			utcTime := parsedTime.UTC()
-			token.ExpiresAt = &utcTime
+		// 尝试多种时间格式
+		var parsedTime time.Time
+		var err error
+		
+		// 首先尝试 RFC3339 格式（SQLite 驱动可能会返回这种格式）
+		parsedTime, err = time.Parse(time.RFC3339, expiresAtStr.String)
+		if err != nil {
+			// 如果失败，尝试简单的日期时间格式
+			parsedTime, err = time.Parse("2006-01-02 15:04:05", expiresAtStr.String)
+		}
+		
+		if err == nil {
+			token.ExpiresAt = &parsedTime
 		}
 	}
 
@@ -303,16 +345,37 @@ func (m *Manager) GetByID(tokenID string) (*Token, bool) {
 
 	// 解析创建时间
 	if createdAtStr.Valid {
-		if parsedTime, err := time.Parse("2006-01-02 15:04:05", createdAtStr.String); err == nil {
-			token.CreatedAt = parsedTime.UTC()
+		// 尝试多种时间格式
+		var parsedTime time.Time
+		var err error
+		
+		// 首先尝试 RFC3339 格式（SQLite 驱动可能会返回这种格式）
+		parsedTime, err = time.Parse(time.RFC3339, createdAtStr.String)
+		if err != nil {
+			// 如果失败，尝试简单的日期时间格式
+			parsedTime, err = time.Parse("2006-01-02 15:04:05", createdAtStr.String)
+		}
+		
+		if err == nil {
+			token.CreatedAt = parsedTime
 		}
 	}
 
 	// 解析过期时间
 	if expiresAtStr.Valid {
-		if parsedTime, err := time.Parse("2006-01-02 15:04:05", expiresAtStr.String); err == nil {
-			utcTime := parsedTime.UTC()
-			token.ExpiresAt = &utcTime
+		// 尝试多种时间格式
+		var parsedTime time.Time
+		var err error
+		
+		// 首先尝试 RFC3339 格式（SQLite 驱动可能会返回这种格式）
+		parsedTime, err = time.Parse(time.RFC3339, expiresAtStr.String)
+		if err != nil {
+			// 如果失败，尝试简单的日期时间格式
+			parsedTime, err = time.Parse("2006-01-02 15:04:05", expiresAtStr.String)
+		}
+		
+		if err == nil {
+			token.ExpiresAt = &parsedTime
 		}
 	}
 
