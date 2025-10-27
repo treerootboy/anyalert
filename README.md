@@ -242,9 +242,9 @@ anyalert/
 │   └── http/              # HTTP 服务实现
 ├── cmd/                   # 应用程序入口
 │   ├── anyalert/          # 统一 CLI 工具（主入口）
-│   ├── server/            # 服务器主程序（已弃用，保留向后兼容）
-│   ├── usermgr/           # 用户管理工具（已弃用，保留向后兼容）
-│   └── tokenmgr/          # Token 管理工具（已弃用，保留向后兼容）
+│   ├── server/            # 服务器主程序（保留向后兼容）
+│   ├── usermgr/           # 用户管理工具（保留向后兼容）
+│   └── tokenmgr/          # Token 管理工具（保留向后兼容）
 ├── internal/              # 内部包
 │   └── config/            # 配置管理
 ├── pkg/                   # 公共包
