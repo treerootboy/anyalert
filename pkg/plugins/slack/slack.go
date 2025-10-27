@@ -41,6 +41,10 @@ func (s *Slack) Name() string {
 func (s *Slack) Initialize(config map[string]interface{}) error {
 	// Check for bot_token (new Bot User OAuth Token mode)
 	if botToken, ok := config["bot_token"].(string); ok && botToken != "" {
+		// Validate bot token format
+		if len(botToken) < 5 || botToken[:5] != "xoxb-" {
+			return fmt.Errorf("invalid bot_token format: must start with 'xoxb-'")
+		}
 		s.botToken = botToken
 		s.client = slack.New(botToken)
 	} else if webhookURL, ok := config["webhook_url"].(string); ok && webhookURL != "" {

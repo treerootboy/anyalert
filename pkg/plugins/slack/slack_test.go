@@ -70,13 +70,24 @@ func TestSlack_Initialize(t *testing.T) {
 		t.Errorf("Expected icon_url 'https://example.com/icon.png', got '%s'", s3.iconURL)
 	}
 
-	// Test with missing both webhook_url and bot_token
+	// Test with invalid bot token format
 	s4 := NewSlack()
+	invalidTokenConfig := map[string]interface{}{
+		"bot_token": "invalid-token-format",
+	}
+
+	err = s4.Initialize(invalidTokenConfig)
+	if err == nil {
+		t.Fatal("Expected error for invalid bot_token format")
+	}
+
+	// Test with missing both webhook_url and bot_token
+	s5 := NewSlack()
 	invalidConfig := map[string]interface{}{
 		"username": "TestBot",
 	}
 
-	err = s4.Initialize(invalidConfig)
+	err = s5.Initialize(invalidConfig)
 	if err == nil {
 		t.Fatal("Expected error when both webhook_url and bot_token are missing")
 	}
