@@ -214,17 +214,23 @@ func updateUser(args []string) {
 		os.Exit(1)
 	}
 
-	// Only update fields that were provided
-	if fs.Lookup("slack").Value.String() != "" {
+	// Track which flags were explicitly set
+	flagsSet := make(map[string]bool)
+	fs.Visit(func(f *flag.Flag) {
+		flagsSet[f.Name] = true
+	})
+
+	// Only update fields that were explicitly provided
+	if flagsSet["slack"] {
 		user.Slack = *slack
 	}
-	if fs.Lookup("youdu").Value.String() != "" {
+	if flagsSet["youdu"] {
 		user.Youdu = *youdu
 	}
-	if fs.Lookup("phone").Value.String() != "" {
+	if flagsSet["phone"] {
 		user.Phone = *phone
 	}
-	if fs.Lookup("sms").Value.String() != "" {
+	if flagsSet["sms"] {
 		user.SMS = *sms
 	}
 

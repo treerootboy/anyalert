@@ -3,12 +3,12 @@ module github.com/treerootboy/anyalert
 go 1.24.7
 
 require (
+	github.com/mattn/go-sqlite3 v1.14.32
 	google.golang.org/grpc v1.76.0
 	google.golang.org/protobuf v1.36.10
 )
 
 require (
-	github.com/mattn/go-sqlite3 v1.14.32 // indirect
 	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/text v0.27.0 // indirect
