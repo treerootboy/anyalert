@@ -1,8 +1,15 @@
-.PHONY: build run test clean proto install
+.PHONY: build run test clean proto install build-usermgr
 
 # Build the server
 build:
 	go build -o bin/anyalert-server cmd/server/main.go
+
+# Build the user manager CLI
+build-usermgr:
+	go build -o bin/usermgr cmd/usermgr/main.go
+
+# Build all binaries
+build-all-bins: build build-usermgr
 
 # Run the server
 run: build

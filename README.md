@@ -144,6 +144,69 @@ anyalert/
 └── scripts/               # 工具脚本
 ```
 
+### 用户元数据管理
+
+AnyAlert 提供了用户元数据管理功能，可以配置每个用户在不同通知渠道的通知对象。
+
+#### 用户管理 CLI 工具
+
+首先构建用户管理工具：
+
+```bash
+make build-usermgr
+```
+
+#### 添加用户
+
+```bash
+# 添加用户，配置不同渠道的账号信息
+./bin/usermgr add -name user1 \
+  -slack user1@example.com \
+  -youdu 10232 \
+  -phone +8613800138000 \
+  -sms +8613800138000
+```
+
+#### 列出所有用户
+
+```bash
+# 表格格式
+./bin/usermgr list
+
+# JSON 格式
+./bin/usermgr list -json
+```
+
+#### 查询用户
+
+```bash
+./bin/usermgr get -name user1
+```
+
+#### 更新用户信息
+
+```bash
+# 更新用户的 Slack 账号
+./bin/usermgr update -name user1 -slack updated@example.com
+
+# 可以同时更新多个字段
+./bin/usermgr update -name user1 -slack new@example.com -phone +8613800138001
+```
+
+#### 删除用户
+
+```bash
+./bin/usermgr delete -name user1
+```
+
+#### 自定义数据库路径
+
+默认情况下，用户数据存储在当前目录的 `users.db` 文件中。可以通过 `-db` 参数指定其他路径：
+
+```bash
+./bin/usermgr add -db /path/to/users.db -name user1 -slack user1@example.com
+```
+
 ### 添加新的通知渠道
 
 1. 在 `pkg/plugins/` 下创建新目录
